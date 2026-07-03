@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Dental Happy Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #f0f4f8;
+            font-family: 'DotGothic16', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game-scaler {
+            width: 485px;
+            height: 850px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform-origin: center center;
+        }
+
+        #game-container {
+            width: 485px;
+            height: 850px;
+            position: relative;
+            background-color: #fff;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        #game-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('images/IMG_4419.png');
+            background-size: cover;
+            background-position: center;
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #opening-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 1000;
+            transition: opacity 1s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .opening-logo {
+            width: 70%;
+        }
+
+        #game-over-screen,
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            z-index: 900;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            border: 5px solid #FFA500;
+            width: 92%;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .title-logo {
+            width: 70%;
+            margin-bottom: 10px;
+        }
+
+        .description {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: #555;
+        }
+
+        .evolution-box {
+            background: #fff5e0;
+            padding: 8px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .evolution-box p {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .evo-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1px;
+            margin-bottom: 3px;
+        }
+
+        .evo-row img {
+            width: 22px;
+            height: 22px;
+            object-fit: contain;
+        }
+
+        .evo-row span {
+            font-size: 0.7rem;
+            color: #bbb;
+        }
+
+        button {
+            font-family: 'DotGothic16', sans-serif;
+            background: #FFA500;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-size: 1.4rem;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #cc8400;
+        }
+
+        button:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+
+        #game-ui {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 80;
+            pointer-events: none;
+        }
+
+        .score-board {
+            background: white;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 1.4rem;
+            border: 3px solid #eee;
+        }
+
+        .next-tooth-display {
+            background: white;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid #eee;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #next-tooth-img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        #lips-cursor {
+            position: absolute;
+            top: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            z-index: 70;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #lips-image {
+            width: 100%;
+        }
+
+        #current-tooth-preview {
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            margin-top: 5px;
+            position: relative;
+            z-index: 2;
+        }
+
+        #drop-guide {
+            position: absolute;
+            top: 75px;
+            left: 50%;
+            width: 0;
+            height: 750px;
+            border-left: 2px dashed rgba(255, 165, 0, 0.4);
+            z-index: 1;
+        }
+
+        #canvas-area {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        .game-over-text {
+            color: #2b2322;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .result-box {
+            background: #e67e22;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        #final-score {
+            font-size: 2.8rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="game-scaler">
+        <div id="game-container">
+            <div id="game-background"></div>
+
+            <div id="opening-screen">
+                <img src="images/IMG_4420.png" alt="Logo" class="opening-logo">
+            </div>
+
+            <div id="start-screen" class="hidden">
+                <div class="panel">
+                    <img src="images/IMG_4420.png" alt="Logo" class="title-logo">
+                    <p class="description">Merge them to make a gold tooth!</p>
+                    <div class="evolution-box">
+                        <p>Evolution Order</p>
+                        <div class="evo-row">
+                            <img src="images/IMG_4407.png"><span>&rarr;</span>
+                            <img src="images/IMG_4408.png"><span>&rarr;</span>
+                            <img src="images/IMG_4409.png"><span>&rarr;</span>
+                            <img src="images/IMG_4410.png"><span>&rarr;</span>
+                            <img src="images/IMG_4411.png"><span>&rarr;</span>
+                            <img src="images/IMG_4412.png">
+                        </div>
+                        <div class="evo-row next-row">
+                            <span>&rarr;</span>
+                            <img src="images/IMG_4413.png"><span>&rarr;</span>
+                            <img src="images/IMG_4414.png"><span>&rarr;</span>
+                            <img src="images/IMG_4415.png"><span>&rarr;</span>
+                            <img src="images/IMG_4416.png"><span>&rarr;</span>
+                            <img src="images/IMG_4417.png" class="gold">
+                        </div>
+                    </div>
+                    <button id="start-btn">START</button>
+                </div>
+            </div>
+
+            <div id="game-over-screen" class="hidden">
+                <div class="panel">
+                    <h2 class="game-over-text">GAME OVER</h2>
+                    <div class="result-box">
+                        <p>YOUR SCORE</p>
+                        <p id="final-score">0</p>
+                    </div>
+                    <button id="restart-btn">PLAY AGAIN</button>
+                </div>
+            </div>
+
+            <div id="game-ui" class="hidden">
+                <div class="score-board">
+                    <span>Score: </span><span id="current-score">0</span>
+                </div>
+                <div class="next-tooth-display">
+                    <span>NEXT</span>
+                    <img id="next-tooth-img" src="" alt="">
+                </div>
+            </div>
+
+            <div id="lips-cursor" class="hidden">
+                <img src="images/IMG_4418.png" id="lips-image" alt="Lips">
+                <div id="current-tooth-preview"></div>
+                <div id="drop-guide"></div>
+            </div>
+
+            <div id="canvas-area"></div>
+        </div>
+    </div>
+
+    <script>
+        const { Engine, Render, Runner, World, Bodies, Events, Composite } = Matter;
+
+        const TEETH = [
+            { name: 'Tooth Bud', img: 'images/IMG_4407.png', gameOverImg: 'images/IMG_4473.png', radius: 24, score: 0 },
+            { name: 'Baby Tooth', img: 'images/IMG_4408.png', gameOverImg: 'images/IMG_4474.png', radius: 34, score: 2 },
+            { name: 'Adult Tooth', img: 'images/IMG_4409.png', gameOverImg: 'images/IMG_4475.png', radius: 44, score: 4 },
+            { name: 'Fluoride', img: 'images/IMG_4410.png', gameOverImg: 'images/IMG_4476.png', radius: 55, score: 6 },
+            { name: 'Cavity', img: 'images/IMG_4411.png', gameOverImg: 'images/IMG_4477.png', radius: 68, score: 10 },
+            { name: 'Treated Tooth', img: 'images/IMG_4412.png', gameOverImg: 'images/IMG_4478.png', radius: 83, score: 14 },
+            { name: 'Silver Tooth', img: 'images/IMG_4413.png', gameOverImg: 'images/IMG_4479.png', radius: 99, score: 20 },
+            { name: 'Whitening', img: 'images/IMG_4414.png', gameOverImg: 'images/IMG_4480.png', radius: 115, score: 30 },
+            { name: 'Braces', img: 'images/IMG_4415.png', gameOverImg: 'images/IMG_4481.png', radius: 130, score: 40 },
+            { name: 'Implant', img: 'images/IMG_4416.png', gameOverImg: 'images/IMG_4482.png', radius: 150, score: 55 },
+            { name: 'Gold Tooth', img: 'images/IMG_4417.png', gameOverImg: 'images/IMG_4483.png', radius: 175, score: 77 }
+        ];
+
+        const LIPS_IMG_NORMAL = 'images/IMG_4418.png';
+        const LIPS_IMG_GAMEOVER = 'images/IMG_4484.png';
+
+        const ORIGINAL_IMG_SIZE = 512;
+        const GAME_WIDTH = 485;
+        const GAME_HEIGHT = 850;
+        const DEADLINE_Y = 180;
+        const DROP_Y = 200;
+
+        let engine, render, runner;
+        let currentIdx = 0, nextIdx = 0, score = 0;
+        let isGameOver = false, canDrop = true, gameActive = false;
+
+        const lipsCursor = document.getElementById('lips-cursor');
+        const lipsImage = document.getElementById('lips-image');
+        const toothPreview = document.getElementById('current-tooth-preview');
+        const nextToothImg = document.getElementById('next-tooth-img');
+        const scoreEl = document.getElementById('current-score');
+        const scaler = document.getElementById('game-scaler');
+
+        function fitToScreen() {
+            const scale = Math.min(window.innerWidth / GAME_WIDTH, window.innerHeight / GAME_HEIGHT) * 0.96;
+            scaler.style.transform = `scale(${scale})`;
+        }
+
+        window.addEventListener('resize', fitToScreen);
+
+        window.onload = () => {
+            fitToScreen();
+            TEETH.forEach(t => {
+                const img = new Image(); img.src = t.img;
+                const goImg = new Image(); goImg.src = t.gameOverImg;
+            });
+            const lipImg = new Image(); lipImg.src = LIPS_IMG_NORMAL;
+            const lipGoImg = new Image(); lipGoImg.src = LIPS_IMG_GAMEOVER;
+
+            setTimeout(() => {
+                document.getElementById('opening-screen').style.opacity = 0;
+                setTimeout(() => {
+                    document.getElementById('opening-screen').classList.add('hidden');
+                    document.getElementById('start-screen').classList.remove('hidden');
+                }, 1000);
+            }, 2000);
+            initPhysics();
+            setupEvents();
+        };
+
+        function initPhysics() {
+            engine = Engine.create();
+            engine.world.gravity.y = 1.3;
+            render = Render.create({
+                element: document.getElementById('canvas-area'),
+                engine: engine,
+                options: { width: GAME_WIDTH, height: GAME_HEIGHT, background: 'transparent', wireframes: false }
+            });
+            const walls = [
+                Bodies.rectangle(GAME_WIDTH / 2, GAME_HEIGHT + 30, GAME_WIDTH, 60, { isStatic: true, render: { visible: false } }),
+                Bodies.rectangle(-30, GAME_HEIGHT / 2, 60, GAME_HEIGHT, { isStatic: true, render: { visible: false } }),
+                Bodies.rectangle(GAME_WIDTH + 30, GAME_HEIGHT / 2, 60, GAME_HEIGHT, { isStatic: true, render: { visible: false } })
+            ];
+            World.add(engine.world, walls);
+            Events.on(engine, 'collisionStart', handleCollisions);
+            Events.on(engine, 'afterUpdate', checkGameOver);
+        }
+
+        function setupEvents() {
+            document.getElementById('start-btn').onclick = startGame;
+            document.getElementById('restart-btn').onclick = startGame;
+            const container = document.getElementById('game-container');
+            const onMove = (clientX) => {
+                if (!gameActive) return;
+                const rect = container.getBoundingClientRect();
+                const scale = rect.width / GAME_WIDTH;
+                let x = (clientX - rect.left) / scale;
+                x = Math.max(30, Math.min(GAME_WIDTH - 30, x));
+                lipsCursor.style.left = x + 'px';
+            };
+            container.onmousemove = (e) => onMove(e.clientX);
+            container.ontouchmove = (e) => { e.preventDefault(); onMove(e.touches[0].clientX); };
+            container.onmousedown = (e) => { if (e.target.tagName !== 'BUTTON') dropTooth(); };
+            container.ontouchstart = (e) => { if (e.target.tagName !== 'BUTTON') { onMove(e.touches[0].clientX); dropTooth(); } };
+        }
+
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.add('hidden');
+            document.getElementById('game-ui').classList.remove('hidden');
+            lipsCursor.classList.remove('hidden');
+
+            lipsImage.src = LIPS_IMG_NORMAL;
+
+            score = 0; scoreEl.innerText = "0";
+            isGameOver = false; gameActive = true; canDrop = true;
+            const bodies = Composite.allBodies(engine.world);
+            bodies.forEach(b => { if (!b.isStatic) World.remove(engine.world, b); });
+            nextIdx = Math.floor(Math.random() * 3);
+            prepareNewTooth();
+            if (runner) Runner.stop(runner);
+            runner = Runner.create();
+            Runner.run(runner, engine);
+            Render.run(render);
+        }
+
+        function prepareNewTooth() {
+            currentIdx = nextIdx;
+            nextIdx = Math.floor(Math.random() * 4);
+            if (nextIdx > 3) nextIdx = Math.floor(Math.random() * 2);
+            const data = TEETH[currentIdx];
+            toothPreview.style.width = (data.radius * 2) + "px";
+            toothPreview.style.height = (data.radius * 2) + "px";
+            toothPreview.style.backgroundImage = `url('${data.img}')`;
+            nextToothImg.src = TEETH[nextIdx].img;
+            canDrop = true;
+        }
+
+        function dropTooth() {
+            if (!canDrop || isGameOver || !gameActive) return;
+            canDrop = false;
+            const x = parseFloat(lipsCursor.style.left) || GAME_WIDTH / 2;
+            createTooth(x, DROP_Y, currentIdx);
+            toothPreview.style.backgroundImage = 'none';
+            setTimeout(() => { if (!isGameOver) prepareNewTooth(); }, 800);
+        }
+
+        function createTooth(x, y, index) {
+            const data = TEETH[index];
+            const scale = (data.radius * 2) / ORIGINAL_IMG_SIZE;
+            const body = Bodies.circle(x, y, data.radius, {
+                label: index.toString(), restitution: 0.3, friction: 0.1,
+                render: { sprite: { texture: data.img, xScale: scale, yScale: scale } }
+            });
+            World.add(engine.world, body);
+        }
+
+        function handleCollisions(event) {
+            event.pairs.forEach(pair => {
+                const { bodyA, bodyB } = pair;
+                if (bodyA.label === bodyB.label && !bodyA.isRemoved && !bodyB.isRemoved) {
+                    const idx = parseInt(bodyA.label);
+                    if (idx < TEETH.length - 1) {
+                        bodyA.isRemoved = true; bodyB.isRemoved = true;
+                        World.remove(engine.world, [bodyA, bodyB]);
+                        createTooth((bodyA.position.x + bodyB.position.x) / 2, (bodyA.position.y + bodyB.position.y) / 2, idx + 1);
+                        score += TEETH[idx + 1].score; scoreEl.innerText = score;
+                    }
+                }
+            });
+        }
+
+        function checkGameOver() {
+            if (isGameOver || !gameActive) return;
+            const bodies = Composite.allBodies(engine.world);
+            for (const body of bodies) {
+                if (body.isStatic) continue;
+                if (body.position.y < DEADLINE_Y && body.speed < 0.2 && body.position.y > 80) {
+                    triggerGameOver();
+                    break;
+                }
+            }
+        }
+
+        function triggerGameOver() {
+            isGameOver = true;
+            gameActive = false;
+            lipsImage.src = LIPS_IMG_GAMEOVER;
+            toothPreview.style.backgroundImage = 'none';
+
+            const bodies = Composite.allBodies(engine.world);
+            bodies.forEach(body => {
+                if (!body.isStatic && body.label) {
+                    const index = parseInt(body.label);
+                    if (!isNaN(index) && TEETH[index] && TEETH[index].gameOverImg) {
+                        body.render.sprite.texture = TEETH[index].gameOverImg;
+                    }
+                }
+            });
+
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('game-over-screen').classList.remove('hidden');
+        }
+    </script>
+</body>
+
+</html>
