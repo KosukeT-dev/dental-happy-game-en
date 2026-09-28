@@ -48,6 +48,8 @@
             background-color: #fff;
             box-shadow: 0 0 50px rgba(0, 0, 0, 0.15);
             overflow: hidden;
+            touch-action: none;
+            user-select: none;
         }
 
         #game-background {
@@ -369,6 +371,7 @@
         let engine, render, runner;
         let currentIdx = 0, nextIdx = 0, score = 0;
         let isGameOver = false, canDrop = true, gameActive = false;
+        let isPointerDown = false; // タッチ/クリック操作中かどうかを管理
 
         const lipsCursor = document.getElementById('lips-cursor');
         const lipsImage = document.getElementById('lips-image');
@@ -426,6 +429,7 @@
             document.getElementById('start-btn').onclick = startGame;
             document.getElementById('restart-btn').onclick = startGame;
             const container = document.getElementById('game-container');
+
             const onMove = (clientX) => {
                 if (!gameActive) return;
                 const rect = container.getBoundingClientRect();
@@ -434,10 +438,52 @@
                 x = Math.max(30, Math.min(GAME_WIDTH - 30, x));
                 lipsCursor.style.left = x + 'px';
             };
-            container.onmousemove = (e) => onMove(e.clientX);
-            container.ontouchmove = (e) => { e.preventDefault(); onMove(e.touches[0].clientX); };
-            container.onmousedown = (e) => { if (e.target.tagName !== 'BUTTON') dropTooth(); };
-            container.ontouchstart = (e) => { if (e.target.tagName !== 'BUTTON') { onMove(e.touches[0].clientX); dropTooth(); } };
+
+            container.addEventListener('mousemove', (e) => {
+                onMove(e.clientX);
+            });
+
+            container.addEventListener('mousedown', (e) => {
+                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+                isPointerDown = true;
+                onMove(e.clientX);
+            });
+
+            container.addEventListener('mouseup', (e) => {
+                if (isPointerDown) {
+                    isPointerDown = false;
+                    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+                    dropTooth();
+                }
+            });
+
+            container.addEventListener('touchstart', (e) => {
+                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+                isPointerDown = true;
+                if (e.touches.length > 0) {
+                    onMove(e.touches[0].clientX);
+                }
+            }, { passive: false });
+
+            container.addEventListener('touchmove', (e) => {
+                if (!isPointerDown) return;
+                e.preventDefault();
+                if (e.touches.length > 0) {
+                    onMove(e.touches[0].clientX);
+                }
+            }, { passive: false });
+
+            container.addEventListener('touchend', (e) => {
+                if (isPointerDown) {
+                    isPointerDown = false;
+                    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+                    dropTooth();
+                }
+            });
+
+            container.addEventListener('touchcancel', () => {
+                isPointerDown = false;
+            });
         }
 
         function startGame() {
@@ -449,7 +495,7 @@
             lipsImage.src = LIPS_IMG_NORMAL;
 
             score = 0; scoreEl.innerText = "0";
-            isGameOver = false; gameActive = true; canDrop = true;
+            isGameOver = false; gameActive = true; canDrop = true; isPointerDown = false;
             const bodies = Composite.allBodies(engine.world);
             bodies.forEach(b => { if (!b.isStatic) World.remove(engine.world, b); });
             nextIdx = Math.floor(Math.random() * 3);
